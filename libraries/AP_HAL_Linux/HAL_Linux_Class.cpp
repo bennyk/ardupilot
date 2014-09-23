@@ -40,6 +40,8 @@ static LinuxRCInput rcinDriver;
  */
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF || CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLE
 static LinuxRCOutput_PRU rcoutDriver;
+#elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_MBMD
+static LinuxRCOutput_I2C rcoutDriver;
 #else
 static Empty::EmptyRCOutput rcoutDriver;
 #endif

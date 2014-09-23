@@ -19,6 +19,7 @@ namespace Linux {
     class LinuxDigitalSource;
     class LinuxRCInput;
     class LinuxRCInput_PRU;
+    class LinuxRCOutput_I2C;
     class LinuxRCOutput_PRU;
     class LinuxSemaphore;
     class LinuxScheduler;

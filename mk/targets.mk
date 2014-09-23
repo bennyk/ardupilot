@@ -27,6 +27,10 @@ linux: HAL_BOARD = HAL_BOARD_LINUX
 linux: TOOLCHAIN = NATIVE
 linux: all
 
+mbmd: HAL_BOARD = HAL_BOARD_LINUX
+mbmd: TOOLCHAIN = NATIVE
+mbmd: all
+
 erle: HAL_BOARD = HAL_BOARD_LINUX
 erle: TOOLCHAIN = BBONE
 erle: all
