@@ -83,6 +83,9 @@ void LinuxRCOutput_I2C::init(void* implspecific)
 
 void LinuxRCOutput_I2C::set_freq(uint32_t chmask, uint16_t freq_hz)            //LSB corresponds to CHAN_1
 {
+    if (_debug)
+    	hal.console->printf("LinuxRCOutput_I2C: setting frequency %.2f with chmask %02xh\n", _frequency, chmask);
+
     sleep();
     usleep(10000);
     uint8_t prescale = roundf(25000000.f / 4096.f / freq_hz)  - 1;
@@ -91,7 +94,8 @@ void LinuxRCOutput_I2C::set_freq(uint32_t chmask, uint16_t freq_hz)            /
     restart();
 
     if (_debug)
-    	hal.console->printf("LinuxRCOutput_I2C: setting frequency %.2f\n", _frequency);
+    	hal.console->printf("LinuxRCOutput_I2C: updated PWM frequency %.2f\n", _frequency);
+
 }
 
 uint16_t LinuxRCOutput_I2C::get_freq(uint8_t ch)
