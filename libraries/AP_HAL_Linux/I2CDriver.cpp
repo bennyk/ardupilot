@@ -17,13 +17,16 @@
 
 using namespace Linux;
 
+extern const AP_HAL::HAL& hal;
+
 /*
   constructor
  */
 LinuxI2CDriver::LinuxI2CDriver(AP_HAL::Semaphore* semaphore, const char *device) : 
     _semaphore(semaphore),
     _fd(-1),
-    _device(device)
+    _device(device),
+    _debug(true)
 {
 }
 
@@ -36,6 +39,9 @@ void LinuxI2CDriver::begin()
         close(_fd);
     }
     _fd = open(_device, O_RDWR);
+
+    if (_debug)
+    	hal.console->printf("LinuxI2CDriver: opened device %s\n", _device);
 }
 
 void LinuxI2CDriver::end() 
@@ -43,6 +49,9 @@ void LinuxI2CDriver::end()
     if (_fd != -1) {
         ::close(_fd);
         _fd = -1;
+
+        if (_debug)
+        	hal.console->printf("LinuxI2CDriver: device closed %s\n", _device);
     }
 }
 
@@ -74,11 +83,19 @@ void LinuxI2CDriver::setHighSpeed(bool active)
 uint8_t LinuxI2CDriver::write(uint8_t addr, uint8_t len, uint8_t* data)
 {
     if (!set_address(addr)) {
+    	if (_debug)
+    		hal.console->printf("LinuxI2CDriver: set address failure!\n");
         return 1;
     }
     if (::write(_fd, data, len) != len) {
+    	if (_debug)
+    		hal.console->printf("LinuxI2CDriver: write failure!\n");
         return 1;
     }
+
+    if (_debug)
+    	hal.console->printf("LinuxI2CDriver: written %d bytes at %02xh to register %02xh\n", len, data, addr);
+
     return 0; // success
 }
 
@@ -112,14 +129,26 @@ static inline __s32 _i2c_smbus_access(int file, char read_write, __u8 command,
 uint8_t LinuxI2CDriver::writeRegister(uint8_t addr, uint8_t reg, uint8_t val)
 {
     if (!set_address(addr)) {
+    	if (_debug)
+    		hal.console->printf("LinuxI2CDriver: setting address %02xh failure\n", addr);
+
         return 1;
     }
     union i2c_smbus_data data;
     data.byte = val;
+
     if (_i2c_smbus_access(_fd,I2C_SMBUS_WRITE, reg,
                          I2C_SMBUS_BYTE_DATA, &data) == -1) {
+
+    	if (_debug)
+    		hal.console->printf("LinuxI2CDriver: write byte failure! writeRegister(%02xh, %02xh, %02xh)\n", addr, reg, val);
+
         return 1;
     }
+
+    if (_debug)
+    	hal.console->printf("LinuxI2CDriver: wrote %02xh to register %02xh\n", val, reg);
+
     return 0;
 }
 

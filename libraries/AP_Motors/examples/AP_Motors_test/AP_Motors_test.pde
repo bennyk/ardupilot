@@ -55,7 +55,7 @@ void setup()
     hal.console->println("AP_Motors library test ver 1.0");
 
     // motor initialisation
-    motors.set_update_rate(490);
+    motors.set_update_rate(30);
     // motors.set_frame_orientation(AP_MOTORS_X_FRAME);
     motors.set_frame_orientation(AP_MOTORS_PLUS_FRAME);
     motors.set_min_throttle(130);
@@ -115,9 +115,9 @@ void motor_order_test()
     motors.armed(true);
     for (int8_t i=1; i <= AP_MOTORS_MAX_NUM_MOTORS; i++) {
         hal.console->printf_P(PSTR("Motor %d\n"),(int)i);
-        motors.output_test(i, 1150);
+        motors.output_test(i, 150);
         hal.scheduler->delay(300);
-        motors.output_test(i, 1000);
+        motors.output_test(i, 4095);
         hal.scheduler->delay(2000);
     }
     motors.armed(false);

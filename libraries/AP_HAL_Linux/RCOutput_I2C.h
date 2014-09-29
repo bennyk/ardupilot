@@ -132,6 +132,7 @@ private:
 private:
     uint8_t _devAddr;
     float _frequency;
+    bool _debug;
 };
 
 #endif // __AP_HAL_LINUX_RCOUTPUT_I2C_H__
