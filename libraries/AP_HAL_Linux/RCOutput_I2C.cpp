@@ -84,7 +84,7 @@ void LinuxRCOutput_I2C::init(void* implspecific)
 void LinuxRCOutput_I2C::set_freq(uint32_t chmask, uint16_t freq_hz)            //LSB corresponds to CHAN_1
 {
     if (_debug)
-    	hal.console->printf("LinuxRCOutput_I2C: setting frequency %.2f with chmask %02xh\n", _frequency, chmask);
+    	hal.console->printf("LinuxRCOutput_I2C: setting frequency %d with chmask %02xh\n", freq_hz, chmask);
 
     sleep();
     usleep(10000);
@@ -102,7 +102,7 @@ uint16_t LinuxRCOutput_I2C::get_freq(uint8_t ch)
 {
     uint8_t data;
     hal.i2c->readRegister(_devAddr, PCA9685_RA_PRE_SCALE, &data);
-    return roundf(25000000.f / 4096.f / (data + 1));
+    return 25000000.f / 4096.f / (data + 1);
 }
 
 void LinuxRCOutput_I2C::enable_ch(uint8_t ch)

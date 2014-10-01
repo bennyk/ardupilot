@@ -254,7 +254,7 @@ esc_calib(uint8_t argc,const Menu::arg *argv)
 
 	while (1) {
 		/* set max PWM */
-		for (unsigned i = 0; i < max_channels; i++) {
+		for (unsigned i = 1; i <= max_channels; i++) {
 
 			if (set_mask & 1<<i) {
 				motors.output_test(i, pwm_high);
@@ -282,7 +282,7 @@ esc_calib(uint8_t argc,const Menu::arg *argv)
 	while (1) {
 
 		/* set disarmed PWM */
-		for (unsigned i = 0; i < max_channels; i++) {
+		for (unsigned i = 1; i <= max_channels; i++) {
 			if (set_mask & 1<<i) {
 				motors.output_test(i, pwm_low);
 			}

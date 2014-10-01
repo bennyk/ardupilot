@@ -46,7 +46,7 @@
 #define AP_MOTORS_NEW_H_FRAME       13   // same as X frame but motors spin in opposite direction
 
 // motor update rate
-#define AP_MOTORS_SPEED_DEFAULT     490 // default output rate to the motors
+#define AP_MOTORS_SPEED_DEFAULT     450 // default output rate to the motors
 
 #define THROTTLE_CURVE_ENABLED      1   // throttle curve disabled by default
 #define THROTTLE_CURVE_MID_THRUST   52  // throttle which produces 1/2 the maximum thrust.  expressed as a percentage of the full throttle range (i.e 0 ~ 100)

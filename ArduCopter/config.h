@@ -149,7 +149,7 @@
 // PWM control
 // default RC speed in Hz
 #ifndef RC_FAST_SPEED
-   #   define RC_FAST_SPEED 490
+   #   define RC_FAST_SPEED 450
 #endif
 
 ////////////////////////////////////////////////////////
