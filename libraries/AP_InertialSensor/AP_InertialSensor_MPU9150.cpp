@@ -240,6 +240,25 @@ enum clock_sel_e {
 #define MPU9150_ACCEL_SCALE_2G    (GRAVITY_MSS / 16384.0f)
 
 
+// MPU60X0 bit configuration
+#define MPU60X0_INTCFG_INT_LEVEL_BIT        7
+#define MPU60X0_INTCFG_INT_OPEN_BIT         6
+#define MPU60X0_INTCFG_LATCH_INT_EN_BIT     5
+#define MPU60X0_INTCFG_INT_RD_CLEAR_BIT     4
+#define MPU60X0_INTCFG_FSYNC_INT_LEVEL_BIT  3
+#define MPU60X0_INTCFG_FSYNC_INT_EN_BIT     2
+#define MPU60X0_INTCFG_I2C_BYPASS_EN_BIT    1
+#define MPU60X0_INTCFG_CLKOUT_EN_BIT        0
+
+#define MPU60X0_USERCTRL_DMP_EN_BIT             7
+#define MPU60X0_USERCTRL_FIFO_EN_BIT            6
+#define MPU60X0_USERCTRL_I2C_MST_EN_BIT         5
+#define MPU60X0_USERCTRL_I2C_IF_DIS_BIT         4
+#define MPU60X0_USERCTRL_DMP_RESET_BIT          3
+#define MPU60X0_USERCTRL_FIFO_RESET_BIT         2
+#define MPU60X0_USERCTRL_I2C_MST_RESET_BIT      1
+#define MPU60X0_USERCTRL_SIG_COND_RESET_BIT     0
+
 const struct gyro_reg_s reg = {
 /*    .who_am_i      */ 0x75,
 /*    .rate_div      */ 0x19,
@@ -457,6 +476,9 @@ uint16_t AP_InertialSensor_MPU9150::_init_sensor( Sample_rate sample_rate )
         goto failed;    
     }
 
+    // setup mpu60X0 as slave and bypass mode
+    setup_slave_and_bypass_mode();
+
     // For now the compass is not used.
     // TODO adjust the functions to the ArduPilot API
 
@@ -479,6 +501,28 @@ uint16_t AP_InertialSensor_MPU9150::_init_sensor( Sample_rate sample_rate )
         // give back i2c semaphore
         i2c_sem->give();
         return -1;
+}
+
+uint8_t AP_InertialSensor_MPU9150::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
+{
+	uint8_t b;
+	hal.i2c->readRegister(devAddr, regAddr, &b);
+    b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+    return hal.i2c->writeRegister(devAddr, regAddr, b);
+}
+
+void AP_InertialSensor_MPU9150::setup_slave_and_bypass_mode()
+{
+	/* Per MPU60X0 register map documentation: -
+	 * When I2C_BYPASS_EN is equal to 1 and I2C_MST_EN (Register 106 bit[5]) is equal to 0, the host
+	 * application processor will be able to directly access the auxiliary I2C bus of the MPU60X0.
+	 * When this bit is equal to 0, the host application processor will not be able to directly
+	 * access the auxiliary I2C bus of the MPU60X0 regardless of the state of I2C_MST_EN.
+	 * For further information regarding Bypass Mode, please refer to Section 7.11 and 7.13 of
+	 * the MPU6000/MPU6050 Product Specification document.
+	 */
+	writeBit(st.hw->addr, st.reg->user_ctrl, MPU60X0_USERCTRL_I2C_MST_EN_BIT, false);
+	writeBit(st.hw->addr, st.reg->int_pin_cfg, MPU60X0_INTCFG_I2C_BYPASS_EN_BIT, true);
 }
 
 /**
