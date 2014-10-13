@@ -55,9 +55,6 @@ private:
     // Filter (specify which one)
     void _set_filter_frequency(uint8_t filter_hz);
 
-    void setup_slave_and_bypass_mode();
-    uint8_t writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-
     // Low Pass filters for gyro and accel 
     LowPassFilter2p _accel_filter_x;
     LowPassFilter2p _accel_filter_y;
