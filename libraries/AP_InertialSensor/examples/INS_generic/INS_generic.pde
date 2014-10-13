@@ -43,6 +43,8 @@ const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
 #if CONFIG_INS_TYPE == HAL_INS_MPU6000
 AP_InertialSensor_MPU6000 ins;
+#elif CONFIG_INS_TYPE == HAL_INS_MPU60X0
+AP_InertialSensor_MPU60X0 ins;
 #elif CONFIG_INS_TYPE == HAL_INS_PX4
 AP_InertialSensor_PX4 ins;
 #elif CONFIG_INS_TYPE == HAL_INS_VRBRAIN
@@ -55,6 +57,8 @@ AP_InertialSensor_Flymaple ins;
 AP_InertialSensor_L3G4200D ins;
 #elif CONFIG_INS_TYPE == HAL_INS_MPU9250
 AP_InertialSensor_MPU9250 ins;
+#elif CONFIG_INS_TYPE == HAL_INS_MPU9150
+AP_InertialSensor_MPU9150 ins;
 #elif CONFIG_INS_TYPE == HAL_INS_L3GD20
 AP_InertialSensor_L3GD20 ins;
 #else
@@ -219,7 +223,7 @@ void run_test()
 
         length = accel.length();
 
-		if (counter++ % 50 == 0) {
+		if (counter++ % 5 == 0) {
 			// display results
 			hal.console->printf_P(PSTR("Accel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
 								  accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);

@@ -27,6 +27,8 @@
 #include <AP_Math.h>
 #include <AP_HAL.h>
 
+#include <unistd.h>
+
 #include "AP_Compass_HMC5843.h"
 
 extern const AP_HAL::HAL& hal;
@@ -168,6 +170,97 @@ bool AP_Compass_HMC5843::re_initialise()
     return true;
 }
 
+#define MPU60X0_DEVICE_ADDRESS 0x68
+
+#define MPU60X0_RA_USER_CTRL        0x6A
+#define MPU60X0_RA_INT_PIN_CFG      0x37
+#define MPU60X0_RA_PWR_MGMT_1       0x6B
+#define MPU60X0_RA_GYRO_CONFIG      0x1B
+#define MPU60X0_RA_ACCEL_CONFIG     0x1C
+
+#define MPU60X0_CLOCK_PLL_XGYRO         0x01
+
+#define MPU60X0_USERCTRL_I2C_MST_EN_BIT         5
+#define MPU60X0_INTCFG_I2C_BYPASS_EN_BIT    1
+#define MPU60X0_PWR1_SLEEP_BIT          6
+#define MPU60X0_PWR1_CLKSEL_BIT         2
+#define MPU60X0_PWR1_CLKSEL_LENGTH      3
+
+#define MPU60X0_GCONFIG_FS_SEL_BIT      4
+#define MPU60X0_GCONFIG_FS_SEL_LENGTH   2
+
+#define MPU60X0_ACONFIG_AFS_SEL_BIT         4
+#define MPU60X0_ACONFIG_AFS_SEL_LENGTH      2
+
+#define MPU60X0_GYRO_FS_250         0x00
+#define MPU60X0_ACCEL_FS_2          0x00
+
+uint8_t AP_Compass_HMC5843::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
+{
+	uint8_t b;
+	hal.i2c->readRegister(devAddr, regAddr, &b);
+    b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+    return hal.i2c->writeRegister(devAddr, regAddr, b);
+}
+
+bool AP_Compass_HMC5843::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
+{
+    //      010 value to write
+    // 76543210 bit numbers
+    //    xxx   args: bitStart=4, length=3
+    // 01000000 shift left (8 - length)    ]
+    // 00001000 shift right (7 - bitStart) ] --- two shifts ensure all non-important bits are 0
+    // 11100011 mask byte
+    // 10101111 original value (sample)
+    // 10100011 original & mask
+    // 10101011 masked | value
+    uint8_t b;
+    if (hal.i2c->readRegister(devAddr, regAddr, &b) == 0) {
+        //uint8_t mask = (0xFF << (8 - length)) | (0xFF >> (bitStart + length - 1));
+        uint8_t mask = (0xFF << (bitStart + 1)) | 0xFF >> ((8 - bitStart) + length - 1);
+        data <<= (8 - length);
+        data >>= (7 - bitStart);
+        b &= mask;
+        b |= data;
+        return hal.i2c->writeRegister(devAddr, regAddr, b);;
+    } else {
+        return false;
+    }
+}
+
+
+void AP_Compass_HMC5843::setup_slave_and_bypass_mode()
+{
+/*
+	writeBits(MPU60X0_DEVICE_ADDRESS, MPU60X0_RA_PWR_MGMT_1, MPU60X0_PWR1_CLKSEL_BIT, MPU60X0_PWR1_CLKSEL_LENGTH, MPU60X0_CLOCK_PLL_XGYRO);
+	writeBits(MPU60X0_DEVICE_ADDRESS, MPU60X0_RA_GYRO_CONFIG, MPU60X0_GCONFIG_FS_SEL_BIT, MPU60X0_GCONFIG_FS_SEL_LENGTH, MPU60X0_GYRO_FS_250);
+	writeBits(MPU60X0_DEVICE_ADDRESS, MPU60X0_RA_ACCEL_CONFIG, MPU60X0_ACONFIG_AFS_SEL_BIT, MPU60X0_ACONFIG_AFS_SEL_LENGTH, MPU60X0_ACCEL_FS_2);
+	writeBit(MPU60X0_DEVICE_ADDRESS, MPU60X0_RA_PWR_MGMT_1, MPU60X0_PWR1_SLEEP_BIT, false);
+
+	writeBit(MPU60X0_DEVICE_ADDRESS, MPU60X0_RA_USER_CTRL, MPU60X0_USERCTRL_I2C_MST_EN_BIT, false);
+	writeBit(MPU60X0_DEVICE_ADDRESS, MPU60X0_RA_INT_PIN_CFG, MPU60X0_INTCFG_I2C_BYPASS_EN_BIT, true);
+	*/
+
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x6B, 0x80);
+	usleep(1000000);
+	
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x19, 0x00);
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x6B, 0x03);
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x1B, 0x18);
+
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x1A, 0x01);
+	
+	uint8_t b;
+	if (hal.i2c->readRegister(MPU60X0_DEVICE_ADDRESS, 0x1A, &b) == 0) {
+		hal.console->printf("Config reg %02xh\n", b);
+	} else {
+		hal.console->printf("read Config reg failed!\n");
+	}
+	
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x6A, 0x00);
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x37, 0x02);
+}
+
 
 // Public Methods //////////////////////////////////////////////////////////////
 bool
@@ -186,6 +279,8 @@ AP_Compass_HMC5843::init()
     if (!_i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
         hal.scheduler->panic(PSTR("Failed to get HMC5843 semaphore"));
     }
+
+    setup_slave_and_bypass_mode();
 
     // determine if we are using 5843 or 5883L
     _base_config = 0;

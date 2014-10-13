@@ -290,6 +290,8 @@ AP_ADC_ADS7844 apm1_adc;
 
 #if CONFIG_INS_TYPE == HAL_INS_MPU6000
 AP_InertialSensor_MPU6000 ins;
+#elif CONFIG_INS_TYPE == HAL_INS_MPU60X0
+AP_InertialSensor_MPU60X0 ins;
 #elif CONFIG_INS_TYPE == HAL_INS_PX4
 AP_InertialSensor_PX4 ins;
 #elif CONFIG_INS_TYPE == HAL_INS_VRBRAIN

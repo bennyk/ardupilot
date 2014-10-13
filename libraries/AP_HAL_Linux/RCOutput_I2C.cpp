@@ -25,7 +25,7 @@ extern const AP_HAL::HAL& hal;
 LinuxRCOutput_I2C::LinuxRCOutput_I2C()
 : _devAddr(PCA9685_DEFAULT_ADDRESS),
   _frequency(0.0),
-  _debug(true)
+  _debug(false)
 {}
 
 uint8_t LinuxRCOutput_I2C::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)

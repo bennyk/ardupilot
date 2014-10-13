@@ -97,3 +97,6 @@ float AP_Baro_HIL::get_pressure() {
 float AP_Baro_HIL::get_temperature() {
     return Temp;
 }
+
+void AP_Baro_HIL::calibrate() {
+}

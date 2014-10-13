@@ -26,7 +26,7 @@ LinuxI2CDriver::LinuxI2CDriver(AP_HAL::Semaphore* semaphore, const char *device)
     _semaphore(semaphore),
     _fd(-1),
     _device(device),
-    _debug(true)
+    _debug(false)
 {
 }
 

@@ -17,6 +17,7 @@ private:
 public:
     bool init();
     uint8_t read();
+    void calibrate();
     float get_pressure();
     float get_temperature();
     void setHIL(float altitude_msl);

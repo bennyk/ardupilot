@@ -238,5 +238,6 @@ protected:
 #include "AP_InertialSensor_MPU9150.h"
 #include "AP_InertialSensor_MPU9250.h"
 #include "AP_InertialSensor_L3GD20.h"
+#include "AP_InertialSensor_MPU60X0.h"
 
 #endif // __AP_INERTIAL_SENSOR_H__
