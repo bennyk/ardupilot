@@ -94,6 +94,14 @@ void LinuxScheduler::_microsleep(uint32_t usec)
     while (nanosleep(&ts, &ts) == -1 && errno == EINTR) ;
 }
 
+void LinuxScheduler::_nanosleep(uint32_t nsec)
+{
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = nsec;
+    while (nanosleep(&ts, &ts) == -1 && errno == EINTR) ;
+}
+
 void LinuxScheduler::delay(uint16_t ms)
 {
     if (stopped_clock_usec) {
@@ -218,6 +226,7 @@ void LinuxScheduler::_run_timers(bool called_from_timer_thread)
     if (!_timer_semaphore.take(0)) {
         printf("Failed to take timer semaphore in _run_timers\n");
     }
+    
     // now call the timer based drivers
     for (int i = 0; i < _num_timer_procs; i++) {
         if (_timer_proc[i] != NULL) {
@@ -234,6 +243,14 @@ void LinuxScheduler::_run_timers(bool called_from_timer_thread)
     _in_timer_proc = false;
 }
 
+
+
+// FIXME need to introduce an ifdef flag for Raspian to support slower timer update frequency
+//#define TIMER_PROCS_BW 1000
+#define TIMER_PROCS_BW 2000
+
+//#define PROFILE_TIMER_LOOP
+
 void *LinuxScheduler::_timer_thread(void)
 {
     _setup_realtime(32768);
@@ -244,18 +261,42 @@ void *LinuxScheduler::_timer_thread(void)
       this aims to run at an average of 1kHz, so that it can be used
       to drive 1kHz processes without drift
      */
-    uint64_t next_run_usec = micros64() + 1000;
+    uint32_t next_run_usec = micros() + TIMER_PROCS_BW;
+
+#ifdef PROFILE_TIMER_LOOP
+    uint32_t sum = 0;
+    uint32_t last_d = 0;
+    int n = 0;
+#endif
+
     while (true) {
-        uint64_t dt = next_run_usec - micros64();
-        if (dt > 2000) {
+
+        int32_t dt = next_run_usec - micros();
+        if (dt < 0) {
             // we've lost sync - restart
-            next_run_usec = micros64();
+            _nanosleep(1); // release pending mutex
+            next_run_usec = micros();
+#ifdef PROFILE_TIMER_LOOP
+            hal.console->printf("timer lost sync %d, last_d %d", dt, last_d);
+#endif
         } else {
             _microsleep(dt);
         }
-        next_run_usec += 1000;
+        next_run_usec += TIMER_PROCS_BW;
+
+#ifdef PROFILE_TIMER_LOOP
+	uint32_t s1 = micros();
+#endif
         // run registered timers
         _run_timers(true);
+#ifdef PROFILE_TIMER_LOOP
+    	n++;
+	last_d = micros() - s1;
+	sum += last_d;
+	if (n % 100 == 0) {
+	    hal.console->printf("avg time procs %.2f\n", (float)sum / (float)n);
+	}
+#endif
     }
     return NULL;
 }

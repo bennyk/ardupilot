@@ -164,6 +164,10 @@ void AP_Baro_MS5611_SPI::sem_give()
 #define MS5611_ADDR 0x76 /** I2C address of the MS5611 on the PX4 board. */
 #endif
 
+AP_Baro_MS5611_I2C::AP_Baro_MS5611_I2C()
+: _debug(false)
+{}
+
 void AP_Baro_MS5611_I2C::init()
 {
     _i2c_sem = hal.i2c->get_semaphore();
@@ -214,14 +218,22 @@ bool AP_Baro_MS5611_I2C::sem_take_nonblocking()
     if (!got) {
         if (!hal.scheduler->system_initializing()) {
             semfail_ctr++;
-            if (semfail_ctr > 100) {
+            if (semfail_ctr > 500) {
                 hal.scheduler->panic(PSTR("PANIC: failed to take _i2c_sem "
                                           "100 times in a row, in "
                                           "AP_Baro_MS5611::_update"));
             }
-        }
+        } else {
+        	if (_debug)
+        		hal.console->println("AP_Baro_MS5611_I2C: system initializing");
+		}
         return false; /* never reached */
     } else {
+    	if (_debug) {
+    		if (semfail_ctr > 0)
+    			hal.console->printf("AP_Baro_MS5611_I2C: semaphore taken after semfail_ctr %d\n", semfail_ctr);
+    	}
+
         semfail_ctr = 0;
     }
     return got;

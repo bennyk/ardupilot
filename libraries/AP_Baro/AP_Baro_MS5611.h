@@ -61,6 +61,9 @@ private:
 class AP_Baro_MS5611_I2C : public AP_Baro_MS5611_Serial
 {
 public:
+	AP_Baro_MS5611_I2C();
+
+public:
     virtual void init();
     virtual uint16_t read_16bits(uint8_t reg);
     virtual uint32_t read_adc();
@@ -71,6 +74,7 @@ public:
 
 private:
     AP_HAL::Semaphore *_i2c_sem;
+    bool _debug;
 };
 #endif // MS5611_WITH_I2C
 

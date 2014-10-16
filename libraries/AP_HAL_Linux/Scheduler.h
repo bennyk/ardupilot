@@ -48,6 +48,7 @@ private:
     struct timespec _sketch_start_time;    
     void _timer_handler(int signum);
     void _microsleep(uint32_t usec);
+    void _nanosleep(uint32_t nsec);
 
     AP_HAL::Proc _delay_cb;
     uint16_t _min_delay_cb_ms;
