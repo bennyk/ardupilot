@@ -64,6 +64,12 @@ uint16_t AP_InertialSensor_MPU60X0::_init_sensor( Sample_rate sample_rate )
 	_accelgyro.reset();
     hal.scheduler->delay(100);
 
+#ifdef HMC5843_IN_MPU60X0_I2CAUX
+    // enabling the MPU60X0 auxport
+    _accelgyro.setI2CMasterModeEnabled(false);
+    _accelgyro.setI2CBypassEnabled(true);
+#endif
+
     _accelgyro.setSleepEnabled(false);
     _accelgyro.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
     _accelgyro.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);

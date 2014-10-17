@@ -18,6 +18,8 @@ private:
     virtual bool        re_initialise(void);
     bool                read_register(uint8_t address, uint8_t *value);
     bool                write_register(uint8_t address, uint8_t value);
+    void setup_slave_and_bypass_mode();
+
     uint32_t            _retry_time; // when unhealthy the millis() value to retry at
     AP_HAL::Semaphore*  _i2c_sem;
 

@@ -168,11 +168,31 @@ bool AP_Compass_HMC5843::re_initialise()
     return true;
 }
 
+#define MPU60X0_DEVICE_ADDRESS 0x68
+
+void AP_Compass_HMC5843::setup_slave_and_bypass_mode()
+{
+	// reset the device
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x6B, 0x80);
+    hal.scheduler->delay(100);
+
+    // setup clock for the passthru mode
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x6B, 0x03);
+	
+	// disable i2c master mode
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x6A, 0x00);
+
+	// enable i2c bypass mode
+	hal.i2c->writeRegister(MPU60X0_DEVICE_ADDRESS, 0x37, 0x02);
+}
+
 
 // Public Methods //////////////////////////////////////////////////////////////
 bool
 AP_Compass_HMC5843::init()
 {
+	hal.console->println("init HMC5843 compass");
+
     int numAttempts = 0, good_count = 0;
     bool success = false;
     uint8_t calibration_gain = 0x20;
@@ -186,6 +206,10 @@ AP_Compass_HMC5843::init()
     if (!_i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
         hal.scheduler->panic(PSTR("Failed to get HMC5843 semaphore"));
     }
+
+#ifdef HMC5843_IN_MPU60X0_I2CAUX
+    setup_slave_and_bypass_mode();
+#endif
 
     // determine if we are using 5843 or 5883L
     _base_config = 0;
