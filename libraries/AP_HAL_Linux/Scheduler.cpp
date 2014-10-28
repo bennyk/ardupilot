@@ -246,8 +246,8 @@ void LinuxScheduler::_run_timers(bool called_from_timer_thread)
 
 
 // FIXME need to introduce an ifdef flag for Raspian to support slower timer update frequency
-//#define TIMER_PROCS_BW 1000
-#define TIMER_PROCS_BW 2000
+#define TIMER_PROCS_BW 1000
+//#define TIMER_PROCS_BW 2000
 
 //#define PROFILE_TIMER_LOOP
 

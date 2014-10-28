@@ -20,7 +20,7 @@ static LinuxUARTDriver uartBDriver(false);
 static LinuxUARTDriver uartCDriver(false);
 
 static LinuxSemaphore  i2cSemaphore;
-static LinuxI2CDriver  i2cDriver(&i2cSemaphore, "/dev/i2c-1");
+static LinuxI2CDriver  i2cDriver(&i2cSemaphore, "/dev/i2c-0");
 static LinuxSPIDeviceManager spiDeviceManager;
 static LinuxAnalogIn analogIn;
 static LinuxStorage storageDriver;

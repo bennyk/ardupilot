@@ -200,11 +200,12 @@
 #define HAL_BOARD_LOG_DIRECTORY "/var/APM/logs"
 #define HAL_INS_DEFAULT HAL_INS_MPU60X0
 //#define HAL_BARO_DEFAULT HAL_BARO_HIL
-#define HAL_BARO_DEFAULT HAL_BARO_MS5611
+//#define HAL_BARO_DEFAULT HAL_BARO_MS5611
+#define HAL_BARO_DEFAULT HAL_BARO_BMP085
 #define HAL_COMPASS_DEFAULT HAL_COMPASS_HMC5843
 
 // configure HMC5843 as connection to i2c auxport on MPU60X0
-#define HMC5843_IN_MPU60X0_I2CAUX
+//#define HMC5843_IN_MPU60X0_I2CAUX
 #else
 #error "no Linux board subtype set"
 #endif

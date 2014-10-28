@@ -84,7 +84,7 @@ uint8_t LinuxI2CDriver::write(uint8_t addr, uint8_t len, uint8_t* data)
 {
     if (!set_address(addr)) {
     	if (_debug)
-    		hal.console->printf("LinuxI2CDriver: set address failure!\n");
+    		hal.console->printf("LinuxI2CDriver: set address %02xh failure!\n", addr);
         return 1;
     }
     if (::write(_fd, data, len) != len) {
@@ -94,7 +94,7 @@ uint8_t LinuxI2CDriver::write(uint8_t addr, uint8_t len, uint8_t* data)
     }
 
     if (_debug)
-    	hal.console->printf("LinuxI2CDriver: written %d bytes at %02xh to register %02xh\n", len, data, addr);
+    	hal.console->printf("LinuxI2CDriver: written %d bytes to device %02xh\n", len, addr);
 
     return 0; // success
 }
@@ -195,6 +195,9 @@ uint8_t LinuxI2CDriver::readRegisters(uint8_t addr, uint8_t reg,
         return 1;
     }
 
+    if (_debug)
+    	hal.console->printf("LinuxI2CDriver: read %d bytes from device %02xh register %02xh\n", len, addr, reg);
+
     return 0;
 }
 
@@ -245,6 +248,9 @@ uint8_t LinuxI2CDriver::readRegister(uint8_t addr, uint8_t reg, uint8_t* data)
         return 1;
     }
     *data = v.byte;
+    if (_debug)
+    	hal.console->printf("LinuxI2CDriver: read one byte %02xh from device %02xh register %02xh\n", *data, addr, reg);
+
     return 0;
 }
 
