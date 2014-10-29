@@ -93,7 +93,7 @@ void LinuxUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
                         txS = 1024;
                     }           
                 } else {                
-                    printf("LinuxUARTDriver TCP connection not stablished\n");
+                    hal.console->printf("LinuxUARTDriver TCP connection not established\n");
                     exit(1);
                 }
                 break;
@@ -103,7 +103,7 @@ void LinuxUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
                 _rd_fd = open(device_path, O_RDWR);
                 _wr_fd = _rd_fd;
                 if (_rd_fd == -1) {
-                    fprintf(stdout, "Failed to open UART device %s - %s\n",
+                    hal.console->printf("Failed to open UART device %s - %s\n",
                             device_path, strerror(errno));
                     return;
                 }
@@ -127,7 +127,7 @@ void LinuxUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
             default:
             {
                 // Notify that the option is not valid and select standart input and output
-                printf("LinuxUARTDriver parsing failed, using default\n");
+                hal.console->printf("LinuxUARTDriver parsing failed, using default\n");
 
                 _rd_fd = 0;
                 _wr_fd = 1;
@@ -257,20 +257,20 @@ void LinuxUARTDriver::_tcp_start_connection(bool wait_for_connection)
 
         listen_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (listen_fd == -1) {
-            printf("socket failed - %s\n", strerror(errno));
+            hal.console->printf("socket failed - %s\n", strerror(errno));
             exit(1);
         }
 
         /* we want to be able to re-use ports quickly */
         setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
-        printf("bind port %u for %u\n", 
+        hal.console->printf("bind port %u for %u\n", 
                 (unsigned)ntohs(sockaddr.sin_port),
                 (unsigned)portNumber);
 
         ret = bind(listen_fd, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
         if (ret == -1) {
-            printf("bind failed on port %u - %s\n",
+            hal.console->printf("bind failed on port %u - %s\n",
                         (unsigned)ntohs(sockaddr.sin_port),
                         strerror(errno));
             exit(1);
@@ -278,21 +278,21 @@ void LinuxUARTDriver::_tcp_start_connection(bool wait_for_connection)
 
         ret = listen(listen_fd, 5);
         if (ret == -1) {
-            printf("listen failed - %s\n", strerror(errno));
+            hal.console->printf("listen failed - %s\n", strerror(errno));
             exit(1);
         }
 
-        printf("Serial port %u on TCP port %u\n", portNumber, 
+        hal.console->printf("Serial port %u on TCP port %u\n", portNumber, 
                 _base_port + portNumber);
         fflush(stdout);
     }
 
     if (wait_for_connection) {
-        printf("Waiting for connection ....\n");
+	hal.console->printf("Waiting for connection ....\n");
         fflush(stdout);
         net_fd = accept(listen_fd, NULL, NULL);
         if (net_fd == -1) {
-            printf("accept() error - %s", strerror(errno));
+            hal.console->printf("accept() error - %s", strerror(errno));
             exit(1);
         }
         setsockopt(net_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
