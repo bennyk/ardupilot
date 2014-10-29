@@ -30,6 +30,9 @@ LinuxI2CDriver::LinuxI2CDriver(AP_HAL::Semaphore* semaphore, const char *device)
 {
 }
 
+LinuxI2CDriver::~LinuxI2CDriver()
+{} // empty for now
+
 /*
   called from HAL class init()
  */

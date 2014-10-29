@@ -3,6 +3,7 @@
 
 #include "HAL_Linux_Class.h"
 #include "AP_HAL_Linux_Private.h"
+#include "i2cbusses.h"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -12,6 +13,8 @@
 #include <AP_HAL_Empty.h>
 #include <AP_HAL_Empty_Private.h>
 
+extern const AP_HAL::HAL& hal;
+
 using namespace Linux;
 
 // 3 serial ports on Linux for now
@@ -20,7 +23,7 @@ static LinuxUARTDriver uartBDriver(false);
 static LinuxUARTDriver uartCDriver(false);
 
 static LinuxSemaphore  i2cSemaphore;
-static LinuxI2CDriver  i2cDriver(&i2cSemaphore, "/dev/i2c-0");
+static LinuxI2CDriver  i2cDriver(&i2cSemaphore, "/dev/i2c-1");
 static LinuxSPIDeviceManager spiDeviceManager;
 static LinuxAnalogIn analogIn;
 static LinuxStorage storageDriver;
@@ -77,7 +80,7 @@ void _usage(void)
     printf("\t                  -A tcp:11.0.0.2:5678\n");    
 }
 
-void HAL_Linux::init(int argc,char* const argv[]) const 
+void HAL_Linux::init(int argc,char* const argv[]) const
 {
     int opt;
     /*
@@ -112,6 +115,60 @@ void HAL_Linux::init(int argc,char* const argv[]) const
     spi->init(NULL);
     utilInstance.init(argc, argv);
 }
+
+void HAL_Linux::scan_i2cbus()
+{
+	struct i2c_adap *adapters;
+	int count;
+	
+	hal.console->println("scanning i2c bus ...");
+
+	adapters = gather_i2c_busses();
+	if (adapters == NULL) {
+		fprintf(stderr, "Error: Out of memory!\n");
+		return;
+	}
+
+	bool found = false;
+	char dev[30];
+
+	// search for i2c adapter with the name "i2c-designware-pci"
+	for (count = 0; adapters[count].name; count++) {
+
+		printf("i2c-%d\t%-10s\t%-32s\t%s\n",
+			adapters[count].nr, adapters[count].funcs,
+			adapters[count].name, adapters[count].algo);
+
+		if (strcmp(adapters[count].name, "i2c-designware-pci") != 0) {
+			continue;
+		}
+
+		sprintf(dev, "/dev/i2c-%d", adapters[count].nr);
+
+		LinuxI2CDriver *i2cdev = new LinuxI2CDriver(&i2cSemaphore, dev);
+		i2cdev->begin();
+
+
+		// 0x68 - test the compass device address
+		uint8_t byte;
+		if (i2cdev->readRegister(0x68, 0, &byte) == 0) {
+			// good
+			hal.console->printf("i2c bus %d is good!\n", adapters[count].nr);
+			i2c = i2cdev;
+			found = true;
+			break;
+		}
+
+		// close and free the memory
+		i2cdev->end();
+		delete i2cdev;
+	}
+
+	if (!found) {
+		hal.scheduler->panic("Failed to locate an active i2c bus!");
+	}
+}
+
 
 const HAL_Linux AP_HAL_Linux;
 

@@ -71,8 +71,19 @@ static void run_cli(AP_HAL::UARTDriver *port)
 
 #endif // CLI_ENABLED
 
+#include <AP_HAL_Linux.h>
+
 static void init_ardupilot()
 {
+#ifdef HAL_BOARD_SUBTYPE_LINUX_MBMD
+	// in mbmd board, we need to scan the i2c busses for a valid i2c bus for ArduCopter.
+	const HAL_Linux *linuxHal = dynamic_cast<const HAL_Linux*>(&hal);
+	if (linuxHal) {
+		HAL_Linux *myHal = const_cast<HAL_Linux*>(linuxHal);
+		myHal->scan_i2cbus();
+	}
+#endif
+
     if (!hal.gpio->usb_connected()) {
         // USB is not connected, this means UART0 may be a Xbee, with
         // its darned bricking problem. We can't write to it for at

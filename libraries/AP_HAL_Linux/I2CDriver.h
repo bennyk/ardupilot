@@ -7,6 +7,7 @@
 class Linux::LinuxI2CDriver : public AP_HAL::I2CDriver {
 public:
     LinuxI2CDriver(AP_HAL::Semaphore* semaphore, const char *device);
+    virtual ~LinuxI2CDriver();
 
     void begin();
     void end();
