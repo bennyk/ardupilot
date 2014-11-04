@@ -480,6 +480,13 @@
  # define LAND_WITH_DELAY_MS        4000    // default delay (in milliseconds) when a land-with-delay is triggered during a failsafe event
 #endif
 
+
+#ifdef HAL_BOARD_SUBTYPE_LINUX_MBMD
+
+#warning "Disabling all mounts on MBMD (antenna or camera)"
+
+#else
+
 //////////////////////////////////////////////////////////////////////////////
 // CAMERA TRIGGER AND CONTROL
 //
@@ -498,6 +505,7 @@
  # define MOUNT2         DISABLED
 #endif
 
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Flight mode definitions
