@@ -151,7 +151,7 @@ void HAL_Linux::scan_i2cbus()
 
 		// 0x68 - test the compass device address
 		uint8_t byte;
-		if (i2cdev->readRegister(0x68, 0, &byte) == 0) {
+		if (i2cdev->readRegister(0x77, 0, &byte) == 0) {
 			// good
 			hal.console->printf("i2c bus %d is good!\n", adapters[count].nr);
 			i2c = i2cdev;

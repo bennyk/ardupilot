@@ -39,8 +39,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "i2cbusses.h"
-#include <linux/i2c.h>
+
+//FIXME fixing this for Yocto OS but it will break Linux i2c header compatibility.
+//#include <linux/i2c.h>
+
 #include <linux/i2c-dev.h>
+#endif
 
 enum adt { adt_dummy, adt_isa, adt_i2c, adt_smbus, adt_unknown };
 
