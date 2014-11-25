@@ -19,7 +19,7 @@ public:
     uint8_t read();
     void calibrate();
     float get_pressure();
-    float get_temperature();
+    float get_temperature() const;
     void setHIL(float altitude_msl);
     void setHIL(float pressure, float temperature);
 };

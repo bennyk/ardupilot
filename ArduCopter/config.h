@@ -55,7 +55,6 @@
 //////////////////////////////////////////////////////////////////////////////
 // sensor types
 
-#define CONFIG_INS_TYPE HAL_INS_DEFAULT
 #define CONFIG_BARO     HAL_BARO_DEFAULT
 #define CONFIG_COMPASS  HAL_COMPASS_DEFAULT
 
@@ -73,8 +72,6 @@
 #if HIL_MODE != HIL_MODE_DISABLED       // we are in HIL mode
  #undef CONFIG_BARO
  #define CONFIG_BARO HAL_BARO_HIL
- #undef CONFIG_INS_TYPE
- #define CONFIG_INS_TYPE HAL_INS_HIL
  #undef  CONFIG_COMPASS
  #define CONFIG_COMPASS HAL_COMPASS_HIL
 #endif
@@ -88,7 +85,9 @@
  # define EPM_ENABLED DISABLED
  # define CLI_ENABLED           DISABLED
  # define FRSKY_TELEM_ENABLED   DISABLED
+ # define NAV_GUIDED            DISABLED
 #endif
+
 
 #if HAL_CPU_CLASS < HAL_CPU_CLASS_75 || CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL || CONFIG_HAL_BOARD == HAL_BOARD_LINUX
  // low power CPUs (APM1, APM2 and SITL)
@@ -107,6 +106,28 @@
 //
 #ifndef FRAME_CONFIG
  # define FRAME_CONFIG   QUAD_FRAME
+#endif
+
+#if FRAME_CONFIG == QUAD_FRAME
+ # define FRAME_CONFIG_STRING "QUAD"
+#elif FRAME_CONFIG == TRI_FRAME
+ # define FRAME_CONFIG_STRING "TRI"
+#elif FRAME_CONFIG == HEXA_FRAME
+ # define FRAME_CONFIG_STRING "HEXA"
+#elif FRAME_CONFIG == Y6_FRAME
+ # define FRAME_CONFIG_STRING "Y6"
+#elif FRAME_CONFIG == OCTA_FRAME
+ # define FRAME_CONFIG_STRING "OCTA"
+#elif FRAME_CONFIG == OCTA_QUAD_FRAME
+ # define FRAME_CONFIG_STRING "OCTA_QUAD"
+#elif FRAME_CONFIG == HELI_FRAME
+ # define FRAME_CONFIG_STRING "HELI"
+#elif FRAME_CONFIG == SINGLE_FRAME
+ # define FRAME_CONFIG_STRING "SINGLE"
+#elif FRAME_CONFIG == COAX_FRAME
+ # define FRAME_CONFIG_STRING "COAX"
+#else
+ # define FRAME_CONFIG_STRING "UNKNOWN"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +159,7 @@
 // ADC Enable - used to eliminate for systems which don't have ADC.
 //
 #ifndef CONFIG_ADC
- # if CONFIG_INS_TYPE == HAL_INS_OILPAN || CONFIG_HAL_BOARD == HAL_BOARD_APM1
+ # if CONFIG_HAL_BOARD == HAL_BOARD_APM1
   #   define CONFIG_ADC ENABLED
  # else
   #   define CONFIG_ADC DISABLED
@@ -300,7 +321,7 @@
 
 // pre-arm baro vs inertial nav max alt disparity
 #ifndef PREARM_MAX_ALT_DISPARITY_CM
- # define PREARM_MAX_ALT_DISPARITY_CM       200     // barometer and inertial nav altitude must be within this many centimeters
+ # define PREARM_MAX_ALT_DISPARITY_CM       100     // barometer and inertial nav altitude must be within this many centimeters
 #endif
 
 // pre-arm check max velocity
@@ -319,9 +340,12 @@
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-//  EKF Checker
+//  EKF & DCM Checker
 #ifndef EKFCHECK_THRESHOLD_DEFAULT
  # define EKFCHECK_THRESHOLD_DEFAULT    0.8f    // EKF checker's default compass and velocity variance above which the EKF's horizontal position will be considered bad
+#endif
+#ifndef DCMCHECK_THRESHOLD_DEFAULT
+ # define DCMCHECK_THRESHOLD_DEFAULT    0.8f    // DCM checker's default yaw error threshold above which we will abandon horizontal position hold.  The units are sin(angle) so 0.8 = about 60degrees of error
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -359,8 +383,12 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //  OPTICAL_FLOW
-#ifndef OPTFLOW                         // sets global enabled/disabled flag for optflow (as seen in CLI)
- # define OPTFLOW                       DISABLED
+#ifndef OPTFLOW
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+  # define OPTFLOW       ENABLED
+ #else
+  # define OPTFLOW       DISABLED
+ #endif
 #endif
 // optical flow based loiter PI values
 #ifndef OPTFLOW_ROLL_P
@@ -412,7 +440,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Nav-Guided - allows external nav computer to control vehicle
 #ifndef NAV_GUIDED
- # define NAV_GUIDED DISABLED
+ # define NAV_GUIDED    ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -466,6 +494,9 @@
 #endif
 #ifndef LAND_DETECTOR_CLIMBRATE_MAX
 # define LAND_DETECTOR_CLIMBRATE_MAX    30  // vehicle climb rate must be between -30 and +30 cm/s
+#endif
+#ifndef LAND_DETECTOR_BARO_CLIMBRATE_MAX
+# define LAND_DETECTOR_BARO_CLIMBRATE_MAX   150  // barometer climb rate must be between -150cm/s ~ +150cm/s
 #endif
 #ifndef LAND_DETECTOR_ROTATION_MAX
  # define LAND_DETECTOR_ROTATION_MAX    0.50f   // vehicle rotation must be below 0.5 rad/sec (=30deg/sec for) vehicle to consider itself landed
@@ -620,7 +651,7 @@
  # define RATE_PITCH_D       		0.004f
 #endif
 #ifndef RATE_PITCH_IMAX
- # define RATE_PITCH_IMAX        	500
+ # define RATE_PITCH_IMAX        	1000
 #endif
 
 #ifndef RATE_YAW_P

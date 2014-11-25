@@ -40,9 +40,11 @@
 #include <errno.h>
 #include "i2cbusses.h"
 
-//FIXME fixing this for Yocto OS but it will break Linux i2c header compatibility.
-//#include <linux/i2c.h>
-
+//fixing this for Yocto OS but it will break Linux i2c header compatibility.
+#ifdef USE_YOCTO_LINUX
+#include <linux/i2c-dev.h>
+#else
+#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #endif
 

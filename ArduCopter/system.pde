@@ -189,7 +189,6 @@ static void init_ardupilot()
 
     // identify ourselves correctly with the ground station
     mavlink_system.sysid = g.sysid_this_mav;
-    mavlink_system.type = 2; //MAV_QUADROTOR;
 
 #if LOGGING_ENABLED == ENABLED
     DataFlash.Init(log_structure, sizeof(log_structure)/sizeof(log_structure[0]));
@@ -233,9 +232,7 @@ static void init_ardupilot()
     pos_control.set_dt(MAIN_LOOP_SECONDS);
 
     // init the optical flow sensor
-    if(g.optflow_enabled) {
-        init_optflow();
-    }
+    init_optflow();
 
     // initialise inertial nav
     inertial_nav.init();
@@ -262,6 +259,9 @@ static void init_ardupilot()
         gcs_send_text_P(SEVERITY_LOW, PSTR("Waiting for first HIL_STATE message"));
         delay(1000);
     }
+
+    // set INS to HIL mode
+    ins.set_hil_mode();
 #endif
 
     // read Baro pressure at ground
@@ -290,10 +290,6 @@ static void init_ardupilot()
 
 #if LOGGING_ENABLED == ENABLED
     Log_Write_Startup();
-  #ifdef LOG_FROM_STARTUP
-    // start dataflash
-    start_logging();
-  #endif
 #endif
 
     // we don't want writes to the serial port to cause us to pause
@@ -332,6 +328,11 @@ static void startup_ground(bool force_gyro_cal)
     report_ins();
  #endif
 
+    // reset ahrs gyro bias
+    if (force_gyro_cal) {
+        ahrs.reset_gyro_drift();
+    }
+
     // setup fast AHRS gains to get right attitude
     ahrs.set_fast_gains(true);
 
@@ -363,7 +364,7 @@ static void update_auto_armed()
             return;
         }
         // if in stabilize or acro flight mode and throttle is zero, auto-armed should become false
-        if(manual_flight_mode(control_mode) && g.rc_3.control_in == 0 && !failsafe.radio) {
+        if(manual_flight_mode(control_mode) && ap.throttle_zero && !failsafe.radio) {
             set_auto_armed(false);
         }
     }else{
@@ -371,12 +372,12 @@ static void update_auto_armed()
         
 #if FRAME_CONFIG == HELI_FRAME
         // for tradheli if motors are armed and throttle is above zero and the motor is started, auto_armed should be true
-        if(motors.armed() && g.rc_3.control_in != 0 && motors.motor_runup_complete()) {
+        if(motors.armed() && !ap.throttle_zero && motors.motor_runup_complete()) {
             set_auto_armed(true);
         }
 #else
         // if motors are armed and throttle is above zero auto_armed should be true
-        if(motors.armed() && g.rc_3.control_in != 0) {
+        if(motors.armed() && !ap.throttle_zero) {
             set_auto_armed(true);
         }
 #endif // HELI_FRAME
@@ -414,5 +415,26 @@ static void telemetry_send(void)
 #if FRSKY_TELEM_ENABLED == ENABLED
     frsky_telemetry.send_frames((uint8_t)control_mode, 
                                 (AP_Frsky_Telem::FrSkyProtocol)g.serial2_protocol.get());
+#endif
+}
+
+/*
+  should we log a message type now?
+ */
+static bool should_log(uint32_t mask)
+{
+#if LOGGING_ENABLED == ENABLED
+    if (!(mask & g.log_bitmask) || in_mavlink_delay) {
+        return false;
+    }
+    bool ret = motors.armed() || (g.log_bitmask & MASK_LOG_WHEN_DISARMED) != 0;
+    if (ret && !DataFlash.logging_started() && !in_log_download) {
+        // we have to set in_mavlink_delay to prevent logging while
+        // writing headers
+        start_logging();
+    }
+    return ret;
+#else
+    return false;
 #endif
 }

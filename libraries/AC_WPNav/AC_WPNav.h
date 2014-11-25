@@ -7,6 +7,7 @@
 #include <AP_Math.h>
 #include <AP_InertialNav.h>     // Inertial Navigation library
 #include <AC_PosControl.h>      // Position control library
+#include <AC_AttitudeControl.h> // Attitude control library
 
 // loiter maximum velocities and accelerations
 #define WPNAV_ACCELERATION              100.0f      // defines the default velocity vs distant curve.  maximum acceleration in cm/s/s that position controller asks for from acceleration controller
@@ -56,7 +57,7 @@ public:
     };
 
     /// Constructor
-    AC_WPNav(const AP_InertialNav& inav, const AP_AHRS& ahrs, AC_PosControl& pos_control);
+    AC_WPNav(const AP_InertialNav& inav, const AP_AHRS& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control);
 
     ///
     /// loiter controller
@@ -135,6 +136,11 @@ public:
     /// set_wp_origin_and_destination - set origin and destination waypoints using position vectors (distance from home in cm)
     void set_wp_origin_and_destination(const Vector3f& origin, const Vector3f& destination);
 
+    /// shift_wp_origin_to_current_pos - shifts the origin and destination so the origin starts at the current position
+    ///     used to reset the position just before takeoff
+    ///     relies on set_wp_destination or set_wp_origin_and_destination having been called first
+    void shift_wp_origin_to_current_pos();
+
     /// get_wp_stopping_point_xy - calculates stopping point based on current position, velocity, waypoint acceleration
     ///		results placed in stopping_position vector
     void get_wp_stopping_point_xy(Vector3f& stopping_point) const;
@@ -190,6 +196,9 @@ public:
     ///     seg_end_type should be set to stopped, straight or spline depending upon the next segment's type
     ///     next_destination should be set to the next segment's destination if the seg_end_type is SEGMENT_END_STRAIGHT or SEGMENT_END_SPLINE
     void set_spline_origin_and_destination(const Vector3f& origin, const Vector3f& destination, bool stopped_at_start, spline_segment_end_type seg_end_type, const Vector3f& next_destination);
+
+    // set_spline_dest_and_vel - accepts a destination position and velocity, sets origin to current position and velocity
+    void set_spline_dest_and_vel(const Vector3f& dest_pos, const Vector3f& dest_vel);
 
     /// reached_spline_destination - true when we have come within RADIUS cm of the waypoint
     bool reached_spline_destination() const { return _flags.reached_destination; }
@@ -263,6 +272,7 @@ protected:
     const AP_InertialNav&   _inav;
     const AP_AHRS&          _ahrs;
     AC_PosControl&          _pos_control;
+    const AC_AttitudeControl& _attitude_control;
 
     // parameters
     AP_Float    _loiter_speed_cms;      // maximum horizontal speed in cm/s while in loiter

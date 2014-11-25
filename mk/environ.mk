@@ -23,6 +23,11 @@ ifneq ($(findstring CYGWIN, $(SYSTYPE)),)
   endif
 endif
 
+# workaround for i2c header file for Yocto
+ifeq ($(findstring yocto,$(shell uname -r)),yocto)
+  EXTRAFLAGS += -DUSE_YOCTO_LINUX
+endif
+
 #
 # We need to know the location of the sketchbook.  If it hasn't been overridden,
 # try the parent of the current directory.  If there is no libraries directory
@@ -148,6 +153,11 @@ endif
 ifneq ($(findstring erle, $(MAKECMDGOALS)),)
 HAL_BOARD = HAL_BOARD_LINUX
 HAL_BOARD_SUBTYPE = HAL_BOARD_SUBTYPE_LINUX_ERLE
+endif
+
+ifneq ($(findstring zynq, $(MAKECMDGOALS)),)
+HAL_BOARD = HAL_BOARD_LINUX
+HAL_BOARD_SUBTYPE = HAL_BOARD_SUBTYPE_LINUX_ZYNQ
 endif
 
 ifneq ($(findstring pxf, $(MAKECMDGOALS)),)
